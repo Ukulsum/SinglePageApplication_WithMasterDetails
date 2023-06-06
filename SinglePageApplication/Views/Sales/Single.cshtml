@@ -1,0 +1,135 @@
+﻿@model SinglePageApplication.ViewModels.VmSales
+@{
+    ViewData["Title"] = "Single";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var listSaleMaster = ViewData["list"] as List<SinglePageApplication.Models.SaleMasters>;
+    var CreateDate = Model.CreateDate == null ? "" : Convert.ToDateTime(Model.CreateDate).ToString("yyyy-mm-dd");
+    var Btn = Model.SaleId > 0 ? "Update" : "Insert";
+    var BtnClass = Model.SaleId > 0 ? "btn btn-success" : "btn btn-primary";
+    var index = 0;
+}
+
+<div class="container">
+    <div class="row">
+        <h1 style="text-align:center">Single page Application</h1>
+        <form asp-action="Single" asp-controller="Sales" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m=>m.SaleId)
+            @Html.LabelFor(m=>m.CreateDate)
+            <input type="date" name="CreateDate" value="@CreateDate" class="form-control"/>        
+            <br />
+            @Html.LabelFor(m=>m.CustomerName)
+            @Html.TextBoxFor(m=>m.CustomerName, new{@class = "form-control", @placeholder="Enter Customer Name"})
+            <br />
+            @Html.LabelFor(m=>m.Gender)
+            <div>
+                Male
+                @Html.RadioButtonFor(m=>m.Gender, "Male")
+                Female
+                @Html.RadioButtonFor(m=>m.Gender, "Female")
+            </div>
+            <br />
+            @Html.LabelFor(m=>m.Photo)
+            <input type="file" name="ImagePath" class="form-control" />
+            <br /><br />
+            @Html.LabelFor(m=>m.CustomerAddress)
+            @Html.TextBoxFor(m=>m.CustomerAddress, new{@class = "form-control", @placeholder="Enter Customer Address"})
+            <br>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Product Type</th>
+                        <th>Quentity</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                        <th>
+                            <button type="button" onclick="addItem();" class="btn btn-outline-info">Add More</button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="tSD">
+                    @foreach (var list in Model.SaleDetails)
+                    {
+                        var UnitPrice = list.Price / list.Quentity;
+                        index++;
+                        <tr id="tr_@index">
+                            <td>
+                                <input type="text" id="ProductName_@index" name="ProductName" value="@list.ProductName" class="form-control" />
+                            </td>
+                            <td>
+                                <input type="text" id="ProductType_@index" name="ProductType" value="@list.ProductType" class="form-control" />
+                            </td>
+                            <td>
+                                <input type="number" id="Quentity_@index" name="Quentity" value="@list.Quentity" onclick="calculatePrice(@index);" style="text-align:right" class="form-control" />
+                            </td>
+                            <td>
+                                <input type="number" id="UnitPrice_@index" name="UnitPrice" value="@UnitPrice" onclick="calculatePrice(@index);" style="text-align:right" class="form-control" />
+                            </td>
+                            <td>
+                                <input type="number" id="Price_@index" name="Price" value="@list.Price" style="text-align:right" class="form-control" />
+                            </td>
+                            <td>
+                                <a href="javascript:void(0)" onclick="removeItem(@index);">Remove</a>
+                            </td>
+                        </tr>
+
+
+                    }
+                </tbody>
+            </table>
+            <br />
+            <button type="submit" class="@BtnClass">@Btn</button>
+            <a href="/Sales/Single" class="btn btn-default">Reset</a>
+            <br /><br />
+        </form>
+
+        <table class="table table-bordered table-responsive table-striped ">
+            <tr class="text-center bg-dark text-light">
+                <th>Date</th>
+                <th>Customer Name</th>
+                <th>Gender</th>
+                <th>Photo</th>
+                <th>Address</th>
+                <th>Action</th>
+            </tr>
+            @foreach (var item in listSaleMaster)
+            {
+                var imagePath = "/Images/" + item.Photo;
+                <tr>
+                    <td>@item.CreateDate</td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.Gender</td>
+                    <td>
+                        <img src="@imagePath" height="100px" width="100px">
+                    </td>
+                    <td>@item.CustomerAddress</td>
+                    <td><a href="/Sales/Single?id=@item.SaleId" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="/Sales/SingleDelete?id=@item.SaleId" onclick="return confirm('Are you sure to Deleted.')" class="btn btn-sm btn-danger">Delete</a>
+                        <a href="/Sales/Single?id=@item.SaleId" class="btn btn-sm btn-warning">Details</a>
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+
+<script>
+    var index = @index;
+    function addItem() {
+        index += 1;
+        var Trs = '<tr id="tr_' + index + '"><td><input type="text" id="ProductName_1" name="ProductName" value=""/></td>' + '<td><input type="text" id="ProductType_' + index + '" name="ProductType" value=""/></td>' + '<td><input type="number" style="text-align:right" id="Quentity_' + index + '" name="Quentity" value="0" onkeydown="calculatePrice(' + index + ');"/></td>' + '<td><input type="number" style="text-align:right" id="UnitPrice_' + index + '" name="UnitPrice" value="0" onkeydown="calculatePrice(' + index + ');"/></td>' +  '<td><input type="number" style="text-align:right" id="Price_' + index + '" name="Price" value="0" /></td>' + '<td><a href="javascript:void(0)" onclick="removeItem(' + index + ');">Remove</a></td>' + '</tr>';
+        document.getElementById('tSD').innerHTML += Trs;
+    }
+
+     function calculatePrice(id) {
+        var Quentity = parseFloat(document.getElementById('Quentity_' + id).value);
+        var UnitPrice = parseFloat(document.getElementById('UnitPrice_' + id).value);
+        document.getElementById('Price_').value = Quentity * UnitPrice;
+    }
+
+    function removeItem(id) {
+        document.getElementById('tr_' + id).remove();
+    }
+</script>
